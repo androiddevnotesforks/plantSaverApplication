@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- New theme on: ui.theme.Theme -->
+    <style name="Theme.PlantSaverApplication" parent="android:Theme.Material.Light.NoActionBar">
+    </style>
+</resources>

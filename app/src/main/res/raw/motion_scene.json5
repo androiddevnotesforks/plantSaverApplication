@@ -1,0 +1,49 @@
+{
+  ConstraintSets: {
+    start: {
+      box: {
+        width: 100,
+        height: 50,
+        start: ['parent', 'start', 0],
+        top: ['parent', 'top', 5],
+        bottom: ['parent', 'bottom', 5],
+      }
+    },
+
+    end: {
+      box: {
+        width: 100,
+        height: 50,
+        end: ['parent', 'end', 0],
+        top: ['parent', 'top', 5],
+        bottom: ['parent', 'bottom', 5],
+      }
+    }
+  },
+
+  Transitions: {
+    default: {
+      from: 'start',
+      to: 'end',
+      duration: 5000,
+      staggered: 0.4,
+      onSwipe: {
+        anchor: 'box',
+        maxVelocity: 4.2,
+        maxAccel: 3,
+        direction: 'end',
+        side: 'start',
+        mode: 'velocity'
+      },
+      pathMotionArc: 'startHorizontal',
+      KeyFrames: {
+        KeyAttributes: [
+          {
+            target: ['box'],
+            frames: [25, 50, 75],
+          }
+        ]
+      }
+    }
+  }
+}
