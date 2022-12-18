@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- New theme on: ui.theme.Theme -->
-    <style name="Theme.PlantSaverApplication" parent="android:Theme.Material.Light.NoActionBar">
+    <style name="Theme.PlantSaverApplication" parent="android:Theme.Material.Light.NoActionBar"/>
+    <!-- Time picker theme -->
+    <style name="MyTimePickerStyle" parent="android:Theme.Material.Light.Dialog.Alert">
+        <item name="android:colorAccent">#1D6700</item>
     </style>
+
+
 </resources>

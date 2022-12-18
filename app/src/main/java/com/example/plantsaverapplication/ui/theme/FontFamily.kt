@@ -13,7 +13,6 @@ import com.example.plantsaverapplication.R
  * @link: https://www.fontsquirrel.com/
  */
 
-
 val abhayal_libre = FontFamily(
     Font(R.font.abhayal_libre_regular, FontWeight.Normal),
     Font(R.font.abhayal_libre_medium, FontWeight.Medium),

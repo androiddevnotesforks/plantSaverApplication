@@ -9,8 +9,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.core.view.ViewCompat
-
+import androidx.core.view.WindowCompat
 
 private val LightColors = lightColorScheme(
     primary = md_theme_light_primary,
@@ -43,7 +42,6 @@ private val LightColors = lightColorScheme(
     outlineVariant = md_theme_light_outlineVariant,
     scrim = md_theme_light_scrim,
 )
-
 
 private val DarkColors = darkColorScheme(
     primary = md_theme_dark_primary,
@@ -80,7 +78,7 @@ private val DarkColors = darkColorScheme(
 @Composable
 fun PlantSaverApplicationTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false, // Dynamic color is available on Android 12+
+    dynamicColor: Boolean = false, //  Dynamic color is available on Android 12+
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -88,14 +86,18 @@ fun PlantSaverApplicationTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        darkTheme -> LightColors //DarkColors
+        darkTheme -> LightColors // DarkColors
         else -> LightColors
     }
     val view = LocalView.current
     if (!view.isInEditMode) {
+        /* getting the current window by tapping into the Activity */
+        val currentWindow = (view.context as? Activity)?.window
+            ?: throw Exception("Not in an activity - unable to get Window reference")
+
         SideEffect {
-            (view.context as Activity).window.statusBarColor = status_bar.toArgb()
-            ViewCompat.getWindowInsetsController(view)?.isAppearanceLightStatusBars = darkTheme
+            currentWindow.statusBarColor = status_bar.toArgb()
+            WindowCompat.getInsetsController(currentWindow, view).isAppearanceLightStatusBars = darkTheme
         }
     }
 
