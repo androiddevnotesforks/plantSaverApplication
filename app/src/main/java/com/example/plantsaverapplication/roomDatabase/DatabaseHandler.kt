@@ -40,9 +40,9 @@ abstract class DatabaseHandler: RoomDatabase() {
     }
 
     /** Insert data to database */
-    suspend fun insertPlants(newPlant: Plants) {
-        plantDao().insert(newPlant)
+    suspend fun insertPlants(newPlant: Plants): Long{
         Log.i(TAG, "User inserted new plants to database")
+        return plantDao().insert(newPlant)
     }
 
     /** Get number of plants */

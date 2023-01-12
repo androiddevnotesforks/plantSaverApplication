@@ -1,5 +1,6 @@
 package com.example.plantsaverapplication.navigation
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.slideInVertically
@@ -21,10 +22,12 @@ import com.example.plantsaverapplication.screens.SettingsScreen
 import com.example.plantsaverapplication.screens.TableScreen
 
 
-private val TAG = "BottomNavigation"
+private const val TAG = "MainNavigation"
 
 @Composable
 fun MainScreen(navController: NavHostController = rememberNavController()) {
+
+    Log.d(TAG, "Main navigation is loaded!")
 
     val navigationVisibility = remember { MutableTransitionState(true) }
         .apply { targetState = false }

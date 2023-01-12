@@ -48,13 +48,13 @@ import androidx.navigation.compose.rememberNavController
 import com.example.plantsaverapplication.R
 import com.example.plantsaverapplication.recyclerViews.Day
 import com.example.plantsaverapplication.recyclerViews.DaySelectorRecyclerView
+import com.example.plantsaverapplication.reminder.RemindersManager
 import com.example.plantsaverapplication.roomDatabase.DatabaseHandler
 import com.example.plantsaverapplication.roomDatabase.Plants
 import com.example.plantsaverapplication.ui.theme.PlantSaverApplicationTheme
 import kotlinx.coroutines.launch
-import java.io.ByteArrayOutputStream
+import org.joda.time.DateTime
 import java.util.*
-import kotlin.random.Random
 
 
 /**
@@ -272,6 +272,7 @@ fun PlantForm(navController: NavHostController, imageID: Int) {
 
                 Log.d(TAG, "$plantName added with $binaryNumberAsInt cycle")
 
+
                 // Creating a new plant
                 val newPlant = Plants(
                     id = null,
@@ -282,13 +283,45 @@ fun PlantForm(navController: NavHostController, imageID: Int) {
                     description = plantDesc.text,
                     image = getBitmapFromImage(mContext, imageID)
                 )
-                //Insert to database and load home screen
-                DatabaseHandler.getInstance(mContext).insertPlants(newPlant)
+
+                // Insert new plant to database and load home screen
+                val insertedPlantID = DatabaseHandler.getInstance(mContext).insertPlants(newPlant)
+
+                // Create alert and after that load home screen
+                for ((index, day) in selectedDays.withIndex()) {
+                    if (day.isSelected) {
+                        createAlert(
+                            context = mContext,
+                            indexOfSelectedDay = index,
+                            selectedTime = timeSelected,
+                            plantName = plantName.text,
+                            plantID = insertedPlantID)
+                    }
+                }
+
                 navController.popBackStack()
                 navController.navigate("home")
             }
         })
     }
+}
+
+private fun createAlert(context: Context, indexOfSelectedDay: Int, selectedTime: String, plantName: String, plantID: Long){
+    // Get current date
+    var currentDate = DateTime()
+    currentDate = currentDate.withDayOfWeek(indexOfSelectedDay+1)
+    // Set selected day
+    // Set hour and day and create alert for user
+    selectedTime.split(":").apply {
+        currentDate = currentDate.withHourOfDay(this[0].toInt())
+        currentDate = currentDate.withMinuteOfHour(this[1].toInt())
+    }
+    // Start reminder
+    RemindersManager.startReminder(
+        context = context,
+        reminderTime = currentDate,
+        plantName = plantName,
+        plantID = plantID)
 }
 
 

@@ -38,6 +38,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.example.plantsaverapplication.R
 import com.example.plantsaverapplication.navigation.Destination
+import com.example.plantsaverapplication.reminder.RemindersManager
 import com.example.plantsaverapplication.roomDatabase.DatabaseHandler
 import com.example.plantsaverapplication.roomDatabase.Plants
 import com.example.plantsaverapplication.ui.theme.PlantSaverApplicationTheme
@@ -235,6 +236,11 @@ fun PlantListItem(plant: Plants) {
             DatabaseHandler
                 .getInstance(mContext)
                 .deletePlant(plant.id!!)
+            // Remove alert
+            RemindersManager.stopReminder(
+                context = mContext,
+                reminderId = plant.id
+            )
             // Refresh plant list
             plantListFromDb = DatabaseHandler
                 .getInstance(mContext)

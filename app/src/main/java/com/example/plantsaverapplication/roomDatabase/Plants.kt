@@ -33,8 +33,8 @@ interface PlantsDAO {
     suspend fun getPlantsByDate(): List<Plants>
 
     /** Insert new plants to database */
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(newPlant: Plants)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(newPlant: Plants): Long
 
     @Query("SELECT COUNT(*) FROM user_plants")
     suspend fun getPlantsNumber(): Int

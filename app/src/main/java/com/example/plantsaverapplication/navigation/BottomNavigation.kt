@@ -66,11 +66,13 @@ private val items = listOf(
     )
 )
 
+/** Save last selected state */
+private var selBoxLastPosition = 0.0F
+
+
 
 @Composable
 fun CustomBottomNavigation(navController: NavController) {
-
-
         /** We need space from the edge of the screen */
         Box(
             modifier = Modifier
@@ -96,27 +98,22 @@ fun CustomBottomNavigation(navController: NavController) {
                 val (item1, item2, item3) = createRefs()
                 val backStackEntry = navController.currentBackStackEntryAsState()
 
-                /** Save last selected state */
-                var lastState by remember {
-                    mutableStateOf(0.0f)
-                }
-
                 /** Move selection box to the selected index */
                 Box {
                     Log.i(TAG, "Selected menu ${navController.currentDestination?.route}")
 
                     when (backStackEntry.value?.destination?.route) {
                         items[0].route -> {
-                            MoveSelectionBox(fromState = lastState, toState = 0.135f)
-                            lastState = 0.135f
+                            MoveSelectionBox(fromState = selBoxLastPosition, toState = 0.135f)
+                            selBoxLastPosition = 0.135f
                         }
                         items[1].route -> {
-                            MoveSelectionBox(fromState = lastState, toState = 0.5f)
-                            lastState = 0.5f
+                            MoveSelectionBox(fromState = selBoxLastPosition, toState = 0.5f)
+                            selBoxLastPosition = 0.5f
                         }
                         items[2].route -> {
-                            MoveSelectionBox(fromState = lastState, toState = 0.87f)
-                            lastState = 0.87f
+                            MoveSelectionBox(fromState = selBoxLastPosition, toState = 0.87f)
+                            selBoxLastPosition = 0.87f
                         }
                     }
                 }
@@ -181,8 +178,8 @@ fun CustomBottomNavigation(navController: NavController) {
                 )
             }
         }
-
 }
+
 
 @OptIn(ExperimentalMotionApi::class)
 @Composable
