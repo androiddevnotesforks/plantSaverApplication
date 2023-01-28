@@ -7,7 +7,7 @@ My goal is to create an application that helps the user to care and water the pl
 
 The latest version of the application looks like this. (Ver. 1.0.2)
 
-<img src="D:\Work\Github\plantSaverApplication\ScreenCaptures\1_0_2.png" style="zoom:50%;" />
+<img src="ScreenCaptures\1_0_2.png" style="zoom:50%;" />
 
 # Acknowledgments
 There are several links that have proved useful during development.
