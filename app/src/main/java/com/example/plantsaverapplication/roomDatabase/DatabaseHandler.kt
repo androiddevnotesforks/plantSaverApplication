@@ -2,6 +2,7 @@ package com.example.plantsaverapplication.roomDatabase
 
 import android.content.Context
 import android.util.Log
+import androidx.lifecycle.LiveData
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -33,11 +34,12 @@ abstract class DatabaseHandler: RoomDatabase() {
         }
     }
 
-    /** Read all plants from database */
-    suspend fun read(): List<Plants> {
-        Log.i(TAG, "User read all flowers from database")
-        return plantDao().getPlantsByDate()
+    /** Read plant from database */
+    suspend fun read(Id: Int): Plants {
+        Log.i(TAG, "User read plant with ID: $Id")
+        return plantDao().getPlantsById(Id)
     }
+
 
     /** Insert data to database */
     suspend fun insertPlants(newPlant: Plants): Long{

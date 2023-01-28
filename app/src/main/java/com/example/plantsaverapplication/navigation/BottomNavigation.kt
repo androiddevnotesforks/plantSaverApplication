@@ -1,265 +1,97 @@
 package com.example.plantsaverapplication.navigation
 
 import android.util.Log
-import androidx.compose.animation.*
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Scaffold
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import androidx.constraintlayout.compose.*
-import androidx.navigation.NavController
+import androidx.compose.runtime.Composable
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.plantsaverapplication.R
-import com.example.plantsaverapplication.screens.*
-
-private const val TAG = "myBottomNavigation"
+import com.example.plantsaverapplication.roomDatabase.PlantsViewModel
+import com.example.plantsaverapplication.screens.AddPlantScreen
+import com.example.plantsaverapplication.screens.HomeScreen
+import com.example.plantsaverapplication.screens.SettingsScreen
+import com.example.plantsaverapplication.screens.TableScreen
 
 /**
- * Krizbai Csaba - 2022.10.17
- * Bottom Navigation class
- * Tutorial source: @Phillip Lackner
+ * Krizbai Csaba - 2022.11.12
+ * This class is responsible for displaying the bottom navigation.
  */
 
-data class BottomNavItem(
-    val name: String,
-    val route: String,
-    val image: ImageVector,
-    val badgeNumber: Int = 0
-)
-
-/** Create a navigation list */
-private val items = listOf(
-    BottomNavItem(
-        name = "Table",
-        route = "table",
-        image = Icons.Default.List
-    ),
-    BottomNavItem(
-        name = "Home",
-        route = "home",
-        image = Icons.Default.Home
-    ),
-    BottomNavItem(
-        name = "Settings",
-        route = "settings",
-        image = Icons.Default.Settings
-    )
-)
-
-/** Save last selected state */
-private var selBoxLastPosition = 0.0F
-
-
+private const val TAG = "BottomNavigation"
 
 @Composable
-fun CustomBottomNavigation(navController: NavController) {
-        /** We need space from the edge of the screen */
-        Box(
-            modifier = Modifier
-                .padding(20.dp)
-        ) {
+fun DrawBottomNavigation(navController: NavHostController, viewModel: PlantsViewModel) {
 
-            /** Constraint Layout */
-            ConstraintLayout(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(
-                                MaterialTheme.colorScheme.secondaryContainer,
-                                MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                        )
-                    )
-                    .padding(1.dp)
+    val hideBottomBar = navController.currentBackStackEntryAsState().value?.destination?.route?.startsWith("AddPlant") == false
+
+    Log.i(TAG, "Bottom navigation is visible status is: $hideBottomBar!")
+
+    Scaffold(
+        bottomBar = {
+            AnimatedVisibility(
+                visible = hideBottomBar,
+                enter = slideInVertically(initialOffsetY = { it }),
+                exit = slideOutVertically(targetOffsetY = { it })
             ) {
-
-                val (item1, item2, item3) = createRefs()
-                val backStackEntry = navController.currentBackStackEntryAsState()
-
-                /** Move selection box to the selected index */
-                Box {
-                    Log.i(TAG, "Selected menu ${navController.currentDestination?.route}")
-
-                    when (backStackEntry.value?.destination?.route) {
-                        items[0].route -> {
-                            MoveSelectionBox(fromState = selBoxLastPosition, toState = 0.135f)
-                            selBoxLastPosition = 0.135f
-                        }
-                        items[1].route -> {
-                            MoveSelectionBox(fromState = selBoxLastPosition, toState = 0.5f)
-                            selBoxLastPosition = 0.5f
-                        }
-                        items[2].route -> {
-                            MoveSelectionBox(fromState = selBoxLastPosition, toState = 0.87f)
-                            selBoxLastPosition = 0.87f
-                        }
-                    }
-                }
-
-                /** Create navigation first item.  */
-                NavigationItemHolder(
-                    item = items[0],
-                    color = Color.White,
-                    isSelected = items[0].route == backStackEntry.value?.destination?.route,
-                    onItemSelected = {
-                        navController.navigate(it.route)
-                    },
-                    modifier = Modifier
-                        .constrainAs(item1) {
-                            start.linkTo(parent.start)
-                            end.linkTo(item2.start)
-                            top.linkTo(parent.top)
-                            bottom.linkTo(parent.bottom)
-                        }
-                )
-
-                /** Create Menu second item */
-                NavigationItemHolder(
-                    item = items[1],
-                    color = Color.White,
-                    isSelected = items[1].route == backStackEntry.value?.destination?.route,
-                    onItemSelected = {
-                        navController.navigate(it.route)
-                    },
-                    modifier = Modifier
-                        .constrainAs(item2) {
-                            start.linkTo(item1.end)
-                            end.linkTo(item3.start)
-                            top.linkTo(parent.top)
-                            bottom.linkTo(parent.bottom)
-                        }
-                )
-
-                /** Create Menu third items */
-                NavigationItemHolder(
-                    item = items[2],
-                    color = Color.White,
-                    isSelected = items[2].route == backStackEntry.value?.destination?.route,
-                    onItemSelected = {
-                        navController.navigate(it.route)
-                    },
-                    modifier = Modifier
-                        .constrainAs(item3) {
-                            start.linkTo(item2.start)
-                            top.linkTo(parent.top)
-                            bottom.linkTo(parent.bottom)
-                            end.linkTo(parent.end)
-                        }
-                )
-
-                /** Create horizontal chain between navigation items */
-                createHorizontalChain(
-                    item1,
-                    item2,
-                    item3,
-                    chainStyle = ChainStyle.Spread
-                )
+                CustomBottomNavigationView(navController = navController)
             }
-        }
-}
 
-
-@OptIn(ExperimentalMotionApi::class)
-@Composable
-private fun MoveSelectionBox(fromState: Float, toState: Float) {
-
-    val context = LocalContext.current
-
-    val motionScene = remember {
-        context.resources
-            .openRawResource(R.raw.motion_scene)
-            .readBytes()
-            .decodeToString()
-    }
-
-    val motionLayoutProgress = remember {
-        Animatable(fromState)
-    }
-
-    LaunchedEffect(Unit) {
-        motionLayoutProgress.animateTo(
-            toState,
-            animationSpec = tween(
-                durationMillis = 700,
-                easing = LinearOutSlowInEasing
-            )
-        )
-    }
-
-    MotionLayout(
-        motionScene = MotionScene(content = motionScene),
-        progress = motionLayoutProgress.value,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Box(
-            modifier = Modifier
-                .layoutId("box")
-                .clip(RoundedCornerShape(13.dp))
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.tertiaryContainer)
-            )
-        }
-    }
-}
-
-@Composable
-fun NavigationItemHolder(
-    item: BottomNavItem,
-    color: Color,
-    isSelected: Boolean,
-    onItemSelected: (BottomNavItem) -> Unit,
-    modifier: Modifier
-) {
-    IconButton(
-        onClick = {
-            if (!isSelected) {
-                onItemSelected(item)
-                item.route
-            }
         },
-        modifier = modifier
-    ) {
+        backgroundColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+    ) { paddingValues ->
+        Column(modifier = androidx.compose.ui.Modifier.padding(paddingValues)) {
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = item.image,
-                contentDescription = item.name,
-                tint = color
+            BottomNavigation(
+                navController = navController,
+                viewModel = viewModel
             )
-            AnimatedVisibility(visible = isSelected) {
-                Text(
-                    text = item.name,
-                    textAlign = TextAlign.Center,
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(start = 5.dp)
-                )
-            }
+
+        }
+    }
+}
+
+/**
+ *  When the user clicks on the bottom navigation, the route to the destination is evaluated here.
+ *  @param navController - as NavHostController
+ *  @param viewModel - HomeScreen and AddPlantScreen using thise viewmodel
+ */
+@Composable
+fun BottomNavigation(
+    navController: NavHostController,
+    viewModel: PlantsViewModel,
+) {
+    NavHost(navController = navController, startDestination = Route.HOME) {
+
+        composable(route = Route.HOME) {
+            HomeScreen(navController, viewModel = viewModel)
+        }
+
+        composable(route = Route.TABLE) {
+            TableScreen()
+        }
+
+        composable(route = Route.SETTINGS) {
+            SettingsScreen()
+        }
+
+        composable(route = Route.ADD_PLANT_UPDATE) {
+            Log.d(TAG, "Entered to secondary composable!")
+
+            val openThisID = navController.currentBackStackEntry?.arguments?.getString("plant") ?: "newID"
+
+            AddPlantScreen(
+                navController = navController,
+                plantID = openThisID,
+                viewModel = viewModel
+            )
         }
     }
 }

@@ -8,7 +8,7 @@ import androidx.compose.material.Checkbox
 import androidx.compose.material.CheckboxDefaults
 import androidx.compose.material.Text
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 
 /**
  * Krizbai Csaba - 2022.12.03
- * I have created the day selection recyclerview.
+ * I have created the day selection recyclerview. (LazyColumn)
  *
  * Example code at the link below:
  * https://github.com/philipplackner/ComposeMultiSelect
