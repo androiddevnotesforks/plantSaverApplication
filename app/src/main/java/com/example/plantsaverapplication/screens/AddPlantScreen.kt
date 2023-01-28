@@ -12,6 +12,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
@@ -24,14 +25,18 @@ import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -44,14 +49,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.example.plantsaverapplication.R
 import com.example.plantsaverapplication.recyclerViews.Day
 import com.example.plantsaverapplication.recyclerViews.DaySelectorRecyclerView
 import com.example.plantsaverapplication.reminder.RemindersManager
 import com.example.plantsaverapplication.roomDatabase.DatabaseHandler
 import com.example.plantsaverapplication.roomDatabase.Plants
-import com.example.plantsaverapplication.ui.theme.PlantSaverApplicationTheme
+import com.example.plantsaverapplication.roomDatabase.PlantsViewModel
 import kotlinx.coroutines.launch
 import org.joda.time.DateTime
 import java.util.*
@@ -82,15 +86,40 @@ private val defaultImage = listOf (
  * User can close this window if you step back or add a new plant to Room database.
  */
 @Composable
-fun AddPlantScreen(navController: NavHostController) {
-    Log.i(TAG, "User opened add plant screen")
+fun AddPlantScreen(navController: NavHostController, plantID: String, viewModel: PlantsViewModel) {
+    Log.i(TAG, "User opened add plant screen with plantID: $plantID")
+    val mContext = LocalContext.current
+
+    // When ID is equal with "newID", its not valid. In these case we need to add new plant
+    val newPlant = if(plantID == "newID"){
+        Plants(
+            id = null,
+            date = Calendar.getInstance().time.time,
+            sprayingCycle = 0,
+            time = "${Calendar.getInstance()[Calendar.HOUR_OF_DAY]}:${Calendar.getInstance()[Calendar.MINUTE]}",
+            name = "",
+            description = "",
+            image = getBitmapFromImage(mContext, defaultImage.random())
+        )
+    }else{
+        val allPlants by viewModel.allProducts.observeAsState(listOf())
+        allPlants.find { plants ->
+            plants.id!! == plantID.toInt()
+        }
+    }
+
+    if(newPlant?.name == null){
+        Log.d(TAG, "Plant name is null!")
+        return
+    }
 
     //  Draw green background
     ImageGreenBackground()
 
     //  DrawForm
-    PlantForm(navController, defaultImage.random())
+    PlantForm(navController, newPlant, mContext)
 }
+
 
 /**
  * This function drawing green decoration box
@@ -110,7 +139,14 @@ fun ImageGreenBackground() {
  * This composable function summarises the whole form.
  */
 @Composable
-fun PlantForm(navController: NavHostController, imageID: Int) {
+fun PlantForm(
+    navController: NavHostController,
+    plant: Plants,
+    mContext: Context,
+) {
+
+    val focusManager = LocalFocusManager.current
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -118,33 +154,35 @@ fun PlantForm(navController: NavHostController, imageID: Int) {
         verticalArrangement = Arrangement.Bottom,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Create local Plant. We will save this plant in the database
+        var localPlants = plant
         //  Form mutable variables
-        var plantName by remember { mutableStateOf(TextFieldValue("")) }
         var plantNameError by remember { mutableStateOf(false) }
-        var plantDesc by remember { mutableStateOf(TextFieldValue("")) }
+        var plantName by remember { mutableStateOf(TextFieldValue(plant.name.toString())) }
         var plantDescError by remember { mutableStateOf(false) }
+        var plantDesc by remember { mutableStateOf(TextFieldValue(plant.description.toString())) }
+        var plantPeriodError by remember { mutableStateOf(false) }
         var errorVisibility by remember { mutableStateOf(false) }
-        val mContext = LocalContext.current
+        var plantTime by remember { mutableStateOf(plant.time!!) }
         val coroutineScope = rememberCoroutineScope()
-        val mCalendar = Calendar.getInstance()
-        var timeSelected by remember { mutableStateOf("${mCalendar[Calendar.HOUR_OF_DAY]}:${mCalendar[Calendar.MINUTE]}") }
-        val days =
-            listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+        val days = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
         var selectedDays by rememberSaveable {
             mutableStateOf(
-                days.map {
+                days.mapIndexed {index, dayName ->
                     Day(
-                        dayName = it,
-                        isSelected = false
+                        dayName = dayName,
+                        isSelected = plant.sprayingCycle!!.shr(6 - index).and(1) == 1
                     )
                 }
             )
         }
 
 
+
+
         // Picture of a plant at the top of the screen.
         Image(
-            painter = painterResource(id = imageID),
+            painter = painterResource(id = defaultImage[0]), // TODO: Change this value
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier
@@ -179,7 +217,6 @@ fun PlantForm(navController: NavHostController, imageID: Int) {
             )
         }
 
-
         // Column with white background
         Column(
             modifier = Modifier
@@ -187,12 +224,17 @@ fun PlantForm(navController: NavHostController, imageID: Int) {
                 .fillMaxWidth(0.88F)
                 .padding(vertical = 10.dp)
                 .clip(RoundedCornerShape(corner = CornerSize(10.dp)))
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = {
+                        focusManager.clearFocus()
+                    })
+                }
                 .background(Color.White),
             horizontalAlignment = Alignment.CenterHorizontally
 
         ) {
 
-            //  Plant name
+            /**  Draw plant name */
             OutlinedEditText(
                 headerText= "Plant name",
                 hint = "Enter the name",
@@ -202,10 +244,12 @@ fun PlantForm(navController: NavHostController, imageID: Int) {
                 width = 0.9F
             ) {
                 plantName = it
-                plantNameError = false
+                if (plantNameError) {
+                    plantNameError = false
+                }
             }
 
-            // Plant description
+            /** Draw plant description */
             OutlinedEditText(
                 headerText = "Description",
                 hint = "Leave a comment",
@@ -215,30 +259,43 @@ fun PlantForm(navController: NavHostController, imageID: Int) {
                 width = 0.9F
             ) {
                 plantDesc = it
-                plantDescError = false
+                if (plantDescError) {
+                    plantDescError = false
+                }
+
             }
 
-            // Draw dropdown for period selector
-            DropDownPeriodSelector(selectedDays, 0.9F, onSelectedDay = { ID, state ->
-                selectedDays = selectedDays.mapIndexed { index, item ->
-                    if (ID == index) {
-                        item.copy(isSelected = state)
-                    } else item
-                }
-            })
+            /** Draw dropdown for period selector */
+            DropDownPeriodSelector(
+                selectedDays = selectedDays,
+                width = 0.9F,
+                focusManager = focusManager,
+                error = plantPeriodError,
+                onSelectedDay = { ID, state ->
+                    selectedDays = selectedDays.mapIndexed { index, item ->
+                        if (ID == index) {
+                            item.copy(isSelected = state)
+                        } else item
+                    }
+                    // Reset error when user selected something
+                    if(plantPeriodError){
+                        plantPeriodError = false
+                    }
 
-            // Time picker
+                })
+
+            /** Time picker (Hour and minute) */
             OutlinedTimePicker(
-                timeSelected = timeSelected,
+                timeSelected = plantTime,
                 imageID = R.drawable.ic_hour_64px,
                 width = 0.9F
             ) { _, selHour, selMinute ->
                 // Set text value
-                timeSelected = "$selHour:$selMinute"
+                plantTime = "$selHour:$selMinute"
             }
 
         }
-        //  Draw a form save button at the bottom of the view
+        /**  Draw a form save button at the bottom of the view */
         FormSaveButton(onClicked = {
 
             // Check form status. Empty inputs not allowed!
@@ -256,10 +313,9 @@ fun PlantForm(navController: NavHostController, imageID: Int) {
                 return@FormSaveButton
             }
 
-
             coroutineScope.launch {
                 var binaryNumberAsInt = 0b0
-                // We need to convert list value to array
+                // We need to convert list value to int
                 // MSB is Monday!!!
                 for ((index, day) in selectedDays.withIndex()) {
                     if (day.isSelected) {
@@ -270,22 +326,24 @@ fun PlantForm(navController: NavHostController, imageID: Int) {
                     }
                 }
 
-                Log.d(TAG, "$plantName added with $binaryNumberAsInt cycle")
+                if(binaryNumberAsInt == 0){
+                    Log.d(TAG, "Watering period is not selected")
+                    plantPeriodError = true
+                    errorVisibility = true
+                    return@launch
+                }
 
+                Log.d(TAG, "[${plant.id}]${plantName.text} added with $binaryNumberAsInt cycle")
 
-                // Creating a new plant
-                val newPlant = Plants(
-                    id = null,
-                    date = Calendar.getInstance().time.time,
-                    sprayingCycle = binaryNumberAsInt,
-                    time = timeSelected,
-                    name = plantName.text,
-                    description = plantDesc.text,
-                    image = getBitmapFromImage(mContext, imageID)
-                )
+                plant.name = plantName.text
+                plant.description = plantDesc.text
+                plant.time = plantTime
+                plant.sprayingCycle= binaryNumberAsInt
+
 
                 // Insert new plant to database and load home screen
-                val insertedPlantID = DatabaseHandler.getInstance(mContext).insertPlants(newPlant)
+                val insertedPlantID = DatabaseHandler.getInstance(mContext).insertPlants(plant)
+                //viewModel.insertPlant(plant)
 
                 // Create alert and after that load home screen
                 for ((index, day) in selectedDays.withIndex()) {
@@ -293,7 +351,7 @@ fun PlantForm(navController: NavHostController, imageID: Int) {
                         createAlert(
                             context = mContext,
                             indexOfSelectedDay = index,
-                            selectedTime = timeSelected,
+                            selectedTime = plant.time!!,
                             plantName = plantName.text,
                             plantID = insertedPlantID)
                     }
@@ -307,6 +365,7 @@ fun PlantForm(navController: NavHostController, imageID: Int) {
 }
 
 private fun createAlert(context: Context, indexOfSelectedDay: Int, selectedTime: String, plantName: String, plantID: Long){
+    Log.d(TAG, "Alert created with ID:$plantID! Days:$indexOfSelectedDay, name:$plantName")
     // Get current date
     var currentDate = DateTime()
     currentDate = currentDate.withDayOfWeek(indexOfSelectedDay+1)
@@ -327,7 +386,7 @@ private fun createAlert(context: Context, indexOfSelectedDay: Int, selectedTime:
 
 // on below line we are creating a function to get bitmap
 // from image and passing params as context and an int for drawable.
-private fun getBitmapFromImage(context: Context, drawable: Int): Bitmap {
+fun getBitmapFromImage(context: Context, drawable: Int): Bitmap {
 
     // on below line we are getting drawable
     val db = ContextCompat.getDrawable(context, drawable)
@@ -471,7 +530,8 @@ fun OutlinedEditText(
         },
         label = {
             Text(text = headerText, fontFamily = FontFamily.Monospace, maxLines = 1)
-        }
+        },
+
     )
 }
 
@@ -486,20 +546,30 @@ fun OutlinedEditText(
 fun DropDownPeriodSelector(
     selectedDays: List<Day>,
     width: Float,
+    focusManager: FocusManager,
+    error: Boolean,
     onSelectedDay: (Int, Boolean) -> Unit
 ) {
     var visibility by remember { mutableStateOf(false) }
+
+    val borderColor = if(error){
+        MaterialTheme.colorScheme.error
+    }else{
+        MaterialTheme.colorScheme.tertiary
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth(width)
             .padding(top = 15.dp)
             .border(
                 1.dp,
-                MaterialTheme.colorScheme.tertiary,
+                borderColor,
                 shape = RoundedCornerShape(5.dp)
             )
             .clickable {
                 visibility = !visibility
+                focusManager.clearFocus()
             }
     ) {
         Row(Modifier.padding(vertical = 10.dp)) {
@@ -514,12 +584,22 @@ fun DropDownPeriodSelector(
                     .size(35.dp)
             )
 
+            var headerText = ""
+            for(daySelected in selectedDays){
+                if(daySelected.isSelected){
+                    headerText += "${daySelected.dayName[0]} "
+                }
+            }
+            if(headerText == ""){
+                headerText = "Watering period"
+            }
+
             Text(
                 modifier = Modifier
                     .padding(10.dp),
                 textAlign = TextAlign.Start,
                 style = MaterialTheme.typography.titleMedium,
-                text = "Watering period",
+                text = headerText,
                 color = MaterialTheme.colorScheme.tertiary,
                 fontFamily = FontFamily.Monospace,
             )
@@ -567,7 +647,7 @@ fun FormSaveButton(onClicked: () -> Unit) {
 @Composable
 @Preview
 fun AddPlantScreenPreview() {
-    PlantSaverApplicationTheme {
-        AddPlantScreen(rememberNavController())
-    }
+//    PlantSaverApplicationTheme {
+//        AddPlantScreen(rememberNavController(), null)
+//    }
 }

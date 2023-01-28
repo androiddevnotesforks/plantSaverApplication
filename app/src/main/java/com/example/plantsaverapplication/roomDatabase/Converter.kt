@@ -5,6 +5,10 @@ import android.graphics.BitmapFactory
 import androidx.room.TypeConverter
 import java.io.ByteArrayOutputStream
 
+/**
+ * Krizbai Csaba - 2022.10.12
+ * This converter class is necessary to be able to save images. Because room database don't handle Bitmaps.
+ */
 class Converters {
 
     @TypeConverter

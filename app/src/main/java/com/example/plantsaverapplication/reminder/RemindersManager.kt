@@ -51,7 +51,7 @@ object RemindersManager {
         plantName: String,
         plantID: Long
     ) {
-        Log.d(TAG, "User created reminder at: $reminderTime")
+        Log.d(TAG, "User created reminder at: $reminderTime with ID:$plantID!")
 
         // Create service
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
