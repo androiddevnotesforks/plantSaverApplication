@@ -13,5 +13,5 @@ val Shapes = Shapes(
 /** Bottom navigation */
 val bottomNavigationShape = RoundedCornerShape(
     topStart = 15.dp,
-    topEnd =  15.dp
+    topEnd = 15.dp
 )

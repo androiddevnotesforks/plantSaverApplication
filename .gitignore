@@ -21,3 +21,4 @@ app/proguard-rules.pro
 .idea/compiler.xml
 .idea/gradle.xml
 .idea/inspectionProfiles/Project_Default.xml
+ScreenCaptures/ignored/*
